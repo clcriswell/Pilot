@@ -34,3 +34,11 @@ export OPENAI_API_KEYS="sk-1,sk-2"        # comma separated list
 Open your browser at `http://localhost:8501`, enter a project description
 (e.g. "Design a drone for wildfire detection") and click **Run Secure Research**.
 A PDF report will be generated for download once the loop completes.
+
+### Running offline
+
+If your environment lacks system packages such as `libpango` required by
+WeasyPrint, the application will automatically fall back to a pure Python
+solution using `fpdf` for PDF generation. Install the Python dependencies from
+`requirements.txt` using locally available wheels and run `streamlit run app.py`
+as described above. No internet connection is needed at runtime.
