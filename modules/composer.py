@@ -28,9 +28,13 @@ def _make_pdf_fpdf(markdown_text: str) -> bytes:
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
     for line in markdown_text.splitlines():
-        safe_line = unicodedata.normalize("NFKD", line).encode("latin-1", "replace").decode("latin-1")
+        safe_line = (
+            unicodedata.normalize("NFKD", line)
+            .encode("latin-1", "replace")
+            .decode("latin-1")
+        )
         pdf.multi_cell(0, 10, safe_line)
-    return bytes(pdf.output(dest="S"))
+    return pdf.output(dest="S").encode("latin-1")
 
 
 def make_pdf(markdown_text: str) -> bytes:
