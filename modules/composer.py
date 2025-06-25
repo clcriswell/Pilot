@@ -1,6 +1,5 @@
 
 from fpdf import FPDF
-import io
 
 
 def _latin1(text: str) -> str:
@@ -26,6 +25,10 @@ def make_pdf(report_text: str) -> bytes:
             pdf.set_font("Arial", '', 12)
         else:
             pdf.multi_cell(0, 8, _latin1(line))
-    buffer = io.BytesIO()
-    pdf.output(buffer)
-    return buffer.getvalue()
+    # FPDF expects a file path when no destination is specified. Using a
+    # ``BytesIO`` object here causes ``pdf.output`` to treat it as a path and
+    # attempt to open it, which raises a ``TypeError``. Instead, return the PDF
+    # contents directly using the ``dest='S'`` option which provides the PDF
+    # as a string.
+    pdf_bytes = pdf.output(dest="S").encode("latin-1")
+    return pdf_bytes
