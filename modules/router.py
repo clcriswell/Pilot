@@ -1,5 +1,11 @@
 
-import os, openai, random
+import random
+
+try:
+    import openai
+except ModuleNotFoundError as e:
+    openai = None
+
 try:
     from config.config import OPENAI_API_KEYS  # user-provided keys
 except ImportError:
@@ -11,6 +17,8 @@ except ImportError:
 class QueryRouter:
     """Rotate through API keys (and optionally proxies) for each outbound query."""
     def __init__(self):
+        if openai is None:
+            raise ModuleNotFoundError("The 'openai' package is required but not installed.")
         if not OPENAI_API_KEYS:
             raise RuntimeError("No OpenAI API keys found. Please populate config/config.py.")
         self.api_keys = OPENAI_API_KEYS

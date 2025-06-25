@@ -1,3 +1,18 @@
+"""Lazy loader for submodules."""
 
-# Expose module names for easier imports in app.py
-from . import planner, inquiry_builder, router, scanner, orchestrator, synthesizer, composer
+__all__ = [
+    "planner",
+    "inquiry_builder",
+    "router",
+    "scanner",
+    "orchestrator",
+    "synthesizer",
+    "composer",
+]
+
+import importlib
+
+def __getattr__(name):
+    if name in __all__:
+        return importlib.import_module(f"{__name__}.{name}")
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
