@@ -55,9 +55,9 @@ class QueryRouter:
         )
         return response.choices[0].message.content.strip()
 
-    def ask(self, prompt: str, domain: str, model_override: str | None = None) -> str:
+    def ask(self, prompt: str, domain: str, model_override: str | None = None) -> tuple[str, str]:
         model_name = model_override or ("gpt-4o-mini" if domain.lower() == "sensors" else "gpt-3.5-turbo")
         # Use current key then rotate for next call
         answer = self._cached_completion(prompt, model_name)
         self.key_index = (self.key_index + 1) % len(self.api_keys)
-        return answer
+        return answer, model_name
