@@ -40,7 +40,9 @@ def run_research(request: str):
 
     # --- summary pass ---
     summary_log = []
-    for domain, answer in list(results.items()):
+    # Iterate over a snapshot to avoid 'dictionary changed size' runtime errors
+    summary_items = list(results.items())
+    for domain, answer in summary_items:
         summary_prompt = (
             f"Summarize the following text in 3–4 crisp bullet points:\n\n{answer}"
         )
