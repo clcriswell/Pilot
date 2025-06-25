@@ -38,7 +38,8 @@ A PDF report will be generated for download once the loop completes.
 ### Running offline
 
 If your environment lacks system packages such as `libpango` required by
-WeasyPrint, the application will automatically fall back to a pure Python
-solution using `fpdf` for PDF generation. Install the Python dependencies from
-`requirements.txt` using locally available wheels and run `streamlit run app.py`
-as described above. No internet connection is needed at runtime.
+WeasyPrint or if the library fails to load, the application automatically
+falls back to a pure Python solution using `fpdf` for PDF generation.
+Install the Python dependencies from `requirements.txt` using locally available
+wheels and run `streamlit run app.py` as described above. No internet connection
+is needed at runtime.
