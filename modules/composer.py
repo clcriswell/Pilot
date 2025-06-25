@@ -21,7 +21,13 @@ def _make_pdf_fpdf(html: str) -> bytes:
     for line in html.splitlines():
         text = line.strip()
         if text:
-            pdf.multi_cell(0, 10, txt=text)
+            # FPDF only supports Latin-1 text with the built-in fonts. Any
+            # characters outside that range (e.g. en-dash) would raise a
+            # UnicodeEncodeError when the PDF is generated. Encode with
+            # ``errors='replace'`` to substitute unsupported characters so the
+            # PDF generation succeeds in restricted environments.
+            safe_text = text.encode("latin-1", "replace").decode("latin-1")
+            pdf.multi_cell(0, 10, txt=safe_text)
         else:
             pdf.ln(5)
     return pdf.output(dest="S").encode("latin-1")
