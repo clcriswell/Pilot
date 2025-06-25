@@ -1,7 +1,7 @@
-
 import random
 import os
 import streamlit as st
+from functools import lru_cache
 
 try:
     import openai
@@ -45,14 +45,19 @@ class QueryRouter:
             )
         self.key_index = random.randrange(len(self.api_keys))
 
-    def ask(self, prompt: str, domain: str) -> str:
-        # Rotate key
-        key = self.api_keys[self.key_index]
-        self.key_index = (self.key_index + 1) % len(self.api_keys)
-        client = openai.OpenAI(api_key=key)
+    @lru_cache(maxsize=128)
+    def _cached_completion(self, prompt: str, model_name: str) -> str:
+        client = openai.OpenAI(api_key=self.api_keys[self.key_index])
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=model_name,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
         )
         return response.choices[0].message.content.strip()
+
+    def ask(self, prompt: str, domain: str, model_override: str | None = None) -> str:
+        model_name = model_override or ("gpt-4o-mini" if domain.lower() == "sensors" else "gpt-3.5-turbo")
+        # Use current key then rotate for next call
+        answer = self._cached_completion(prompt, model_name)
+        self.key_index = (self.key_index + 1) % len(self.api_keys)
+        return answer
