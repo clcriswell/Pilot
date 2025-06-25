@@ -40,7 +40,7 @@ def run_research(request: str):
 
     # --- summary pass ---
     summary_log = []
-    for domain, answer in results.items():
+    for domain, answer in list(results.items()):
         summary_prompt = (
             f"Summarize the following text in 3–4 crisp bullet points:\n\n{answer}"
         )
