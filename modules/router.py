@@ -1,5 +1,6 @@
 
 import random
+import os
 import streamlit as st
 
 try:
@@ -16,12 +17,19 @@ except ImportError:
         LOCAL_KEYS = []
 
 def _load_api_keys() -> list:
-    """Return API keys from Streamlit secrets or fallback config."""
+    """Return API keys from Streamlit secrets, env vars or fallback config."""
     keys = st.secrets.get("openai_api_keys")
     if isinstance(keys, str):
         keys = [k.strip() for k in keys.split(',') if k.strip()]
     if isinstance(keys, list) and keys:
         return list(keys)
+
+    env_keys = os.environ.get("OPENAI_API_KEYS") or os.environ.get("OPENAI_API_KEY")
+    if isinstance(env_keys, str):
+        parsed = [k.strip() for k in env_keys.split(',') if k.strip()]
+        if parsed:
+            return parsed
+
     return LOCAL_KEYS
 
 class QueryRouter:

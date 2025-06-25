@@ -23,6 +23,14 @@ Add your OpenAI key(s) to `.streamlit/secrets.toml` as:
 openai_api_keys = ["sk-...", "sk-..."]
 ```
 
+You can also provide keys via environment variables when running locally:
+
+```bash
+export OPENAI_API_KEY="sk-..."           # single key
+# or
+export OPENAI_API_KEYS="sk-1,sk-2"        # comma separated list
+```
+
 Open your browser at `http://localhost:8501`, enter a project description
 (e.g. "Design a drone for wildfire detection") and click **Run Secure Research**.
 A PDF report will be generated for download once the loop completes.
