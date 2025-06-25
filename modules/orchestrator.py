@@ -14,7 +14,7 @@ def run_research(request: str):
             key_id = (qr.key_index % len(qr.api_keys)) + 1
             log.append(f'Querying [{domain}] using API Key-{key_id}: "{prompt}"')
             try:
-                answer = qr.ask(prompt, domain, model_override=None)
+                answer, model_used = qr.ask(prompt, domain, model_override=None)
             except Exception as e:
                 log.append(f"Error querying {domain}: {e}")
                 continue
@@ -22,7 +22,7 @@ def run_research(request: str):
             if clean != answer:
                 log.append(f"[{domain}] response sanitized.")
             results[domain] = clean
-            log.append(f"Received [{domain}] answer ✓")
+            log.append(f"Received [{domain}] (model {model_used}) answer ✓")
             if domain.lower() == "regulations":
                 import re
                 follow_re = r'(?:Part\s?\d+|14\s*CFR\s*§\s*\d+|waiver)'
@@ -46,7 +46,7 @@ def run_research(request: str):
         summary_prompt = (
             f"Summarize the following text in 3–4 crisp bullet points:\n\n{answer}"
         )
-        bullets = qr.ask(summary_prompt, domain, model_override="gpt-3.5-turbo")
+        bullets, model_used = qr.ask(summary_prompt, domain, model_override="gpt-3.5-turbo")
         results[f"{domain}\u2011Summary"] = bullets
         summary_log.append(f"Summarized [{domain}] into bullets.")
     log.extend(summary_log)
@@ -56,8 +56,11 @@ def run_research(request: str):
         "Based on all domain findings, list 3 concrete next steps "
         "to move this R&D project forward."
     )
-    next_steps = qr.ask(next_steps_prompt, "roadmap", model_override="gpt-3.5-turbo")
+    next_steps, model_used = qr.ask(next_steps_prompt, "roadmap", model_override="gpt-3.5-turbo")
     results["Next Steps"] = next_steps
     log.append("Generated recommended next steps.")
+
+    # delete any placeholder that crept in
+    results.pop("Next Steps Considerations", None)
 
     return results, log

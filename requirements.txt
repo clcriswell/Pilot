@@ -4,3 +4,6 @@ openai
 fpdf
 markdown2
 weasyprint
+
+markdown2>=2.4
+weasyprint>=60.2
