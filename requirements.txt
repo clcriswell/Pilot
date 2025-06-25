@@ -2,3 +2,5 @@
 streamlit
 openai
 fpdf
+markdown2
+weasyprint
