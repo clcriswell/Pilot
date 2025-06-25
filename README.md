@@ -13,8 +13,14 @@ git clone <your‑repo‑url>
 cd secure-rd-assistant
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp config/config_template.py config/config.py   # add your keys
+cp config/config_template.py config/config.py   # optional fallback
 streamlit run app.py
+```
+
+Add your OpenAI key(s) to `.streamlit/secrets.toml` as:
+
+```toml
+openai_api_keys = ["sk-...", "sk-..."]
 ```
 
 Open your browser at `http://localhost:8501`, enter a project description
