@@ -8,6 +8,7 @@ __all__ = [
     "orchestrator",
     "synthesizer",
     "composer",
+    "tools",
 ]
 
 import importlib
