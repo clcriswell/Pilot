@@ -181,3 +181,55 @@ class QueryRouter:
 
         self.key_index = (self.key_index + 1) % len(self.api_keys)
         return answer, model_name
+
+    async def ask_async(self, prompt: str, domain: str) -> tuple[str, str]:
+        """Async version of ask() for concurrent execution."""
+        model_name = "gpt-4"
+        key = self.api_keys[self.key_index]
+        self.key_index = (self.key_index + 1) % len(self.api_keys)
+
+        messages = [
+            {"role": "system", "content": self.base_system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+
+        try:
+            response = await openai.ChatCompletion.acreate(
+                model=model_name,
+                messages=messages,
+                functions=getattr(self, "function_schemas", None),
+                function_call="auto",
+                api_key=key,
+            )
+        except Exception as e:
+            return f"Error: {e}", model_name
+
+        msg = response["choices"][0]["message"]
+        conversation = messages[:]
+        while msg.get("function_call"):
+            func_name = msg["function_call"]["name"]
+            args_json = msg["function_call"].get("arguments", "{}")
+            try:
+                args = json.loads(args_json)
+            except json.JSONDecodeError:
+                args = {}
+
+            result = self.call_tool(func_name, args)
+            conversation.append({"role": "assistant", "content": None, "function_call": msg["function_call"]})
+            conversation.append({"role": "function", "name": func_name, "content": str(result)})
+
+            try:
+                response = await openai.ChatCompletion.acreate(
+                    model=model_name,
+                    messages=conversation,
+                    functions=self.function_schemas,
+                    function_call="auto",
+                    api_key=key,
+                )
+            except Exception as e:
+                return f"Error after function call: {e}", model_name
+
+            msg = response["choices"][0]["message"]
+
+        answer = msg.get("content", "").strip()
+        return answer, model_name

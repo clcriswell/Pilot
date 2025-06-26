@@ -1,3 +1,4 @@
+import asyncio
 from modules import planner, inquiry_builder, router, scanner
 
 def run_research(request: str, knowledge_base=None):
@@ -10,36 +11,35 @@ def run_research(request: str, knowledge_base=None):
     while domains:
         log.append(f"--- Round {round_num}: Executing {len(domains)} queries ---")
         new_tasks = []
+        tasks = []
+        task_domains = []
         for domain in domains:
-            # Reuse cached answer if available
             if domain in knowledge_base:
                 log.append(f"Using cached answer for [{domain}]")
                 results[domain] = knowledge_base[domain]
-                continue
-            prompt = inquiry_builder.build_inquiry(domain)
-            key_id = (qr.key_index % len(qr.api_keys)) + 1
-            log.append(f'Querying [{domain}] using API Key-{key_id}: "{prompt}"')
-            try:
-                answer, model_used = qr.ask(prompt, domain, model_override=None)
-            except Exception as e:
-                log.append(f"Error querying {domain}: {e}")
-                continue
-            clean = scanner.scan_content(answer)
-            if clean != answer:
-                log.append(f"[{domain}] response sanitized.")
-            results[domain] = clean
-            # Cache answer for subsequent prompts in this session
-            knowledge_base[domain] = clean
-            log.append(f"Received [{domain}] (model {model_used}) answer ✓")
-            if domain.lower() == "regulations":
-                import re
-                follow_re = r'(?:Part\s?\d+|14\s*CFR\s*§\s*\d+|waiver)'
-                match = re.search(follow_re, clean, flags=re.I)
-                if match:
-                    follow_up_domain = match.group(0).strip()
-                    if follow_up_domain not in results:
-                        log.append(f"Follow‑up identified: {follow_up_domain}")
-                        new_tasks.append(follow_up_domain)
+            else:
+                prompt = inquiry_builder.build_inquiry(domain)
+                log.append(f'Querying [{domain}] with GPT-4: "{prompt}"')
+                tasks.append(qr.ask_async(prompt, domain))
+                task_domains.append(domain)
+        if tasks:
+            responses = asyncio.run(asyncio.gather(*tasks))
+            for dom, (answer, model_used) in zip(task_domains, responses):
+                clean = scanner.scan_content(answer)
+                if clean != answer:
+                    log.append(f"[{dom}] response sanitized.")
+                results[dom] = clean
+                knowledge_base[dom] = clean
+                log.append(f"Received [{dom}] (model {model_used}) answer ✓")
+                if dom.lower() == "regulations":
+                    import re
+                    follow_re = r'(?:Part\s?\d+|14\s*CFR\s*§\s*\d+|waiver)'
+                    match = re.search(follow_re, clean, flags=re.I)
+                    if match:
+                        follow_up = match.group(0).strip()
+                        if follow_up not in results:
+                            log.append(f"Follow‑up identified: {follow_up}")
+                            new_tasks.append(follow_up)
         if not new_tasks:
             break
         domains = new_tasks
