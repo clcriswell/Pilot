@@ -4,6 +4,9 @@ from modules import planner, inquiry_builder, router, scanner, orchestrator, syn
 st.title("🔒 Secure R&D Assistant – Test Pilot")
 st.write("Enter a high‑level R&D project description and let the assistant research it securely.")
 
+# Initialize per-session knowledge base for domain answers
+kb = st.session_state.setdefault("knowledge_base", {})  # {domain: answer}
+
 user_request = st.text_area("Project Description:", placeholder="e.g. Design a drone for wildfire detection", height=100)
 run_clicked = st.button("Run Secure Research")
 
@@ -14,7 +17,8 @@ if run_clicked and user_request:
         st.error("Please enter a valid project description.")
     else:
         st.info("Starting secure research… this may take a minute.")
-        results, log = orchestrator.run_research(safe_request)
+        results, log = orchestrator.run_research(safe_request, kb)
+        st.session_state["knowledge_base"] = kb
         st.subheader("Activity Log")
         st.code("\n".join(log))
         report_md = synthesizer.synthesize(

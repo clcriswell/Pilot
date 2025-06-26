@@ -1,15 +1,21 @@
 from modules import planner, inquiry_builder, router, scanner
 
-def run_research(request: str):
+def run_research(request: str, knowledge_base=None):
     domains = planner.plan_request(request)
     results, log = {}, []
     log.append(f"Task Decomposition -> Domains identified: {', '.join(domains)}")
+    knowledge_base = knowledge_base or {}
     qr = router.QueryRouter()
     round_num = 1
     while domains:
         log.append(f"--- Round {round_num}: Executing {len(domains)} queries ---")
         new_tasks = []
         for domain in domains:
+            # Reuse cached answer if available
+            if domain in knowledge_base:
+                log.append(f"Using cached answer for [{domain}]")
+                results[domain] = knowledge_base[domain]
+                continue
             prompt = inquiry_builder.build_inquiry(domain)
             key_id = (qr.key_index % len(qr.api_keys)) + 1
             log.append(f'Querying [{domain}] using API Key-{key_id}: "{prompt}"')
@@ -22,6 +28,8 @@ def run_research(request: str):
             if clean != answer:
                 log.append(f"[{domain}] response sanitized.")
             results[domain] = clean
+            # Cache answer for subsequent prompts in this session
+            knowledge_base[domain] = clean
             log.append(f"Received [{domain}] (model {model_used}) answer ✓")
             if domain.lower() == "regulations":
                 import re
