@@ -1,15 +1,10 @@
-
 streamlit
 openai
 fpdf
-markdown2
-weasyprint
-
 markdown2>=2.4
-weasyprint>=60.2
-
 jinja2>=3.1
-markdown2>=2.4
 weasyprint>=60.2
-transformers>=4.40
-torch>=2.0 # transformers runtime
+
+# Optional local LLM support for polishing (set ENABLE_POLISH)
+# transformers>=4.40
+# torch>=2.0

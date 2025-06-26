@@ -5,7 +5,13 @@ If transformers / GPU not present it degrades to a no op.
 
 import os
 
-USE_POLISH = os.environ.get("ENABLE_POLISH", "0") == "1"
+flag = os.environ.get("ENABLE_POLISH")
+if flag is None:
+    try:
+        from config.config import ENABLE_POLISH as flag
+    except Exception:
+        flag = "false"
+USE_POLISH = str(flag).lower() in ("1", "true", "yes")
 
 
 def polish(text: str) -> str:
