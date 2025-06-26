@@ -4,6 +4,7 @@ import streamlit as st
 from functools import lru_cache
 from modules import tools  # to access semantic_search, fetch_image, summarize_text
 import json
+import datetime
 
 try:
     import openai
@@ -112,11 +113,28 @@ class QueryRouter:
         return response.choices[0].message.content.strip()
 
     def call_tool(self, name: str, args: dict):
-        """Dispatch the function call to the appropriate tool and return its result."""
+        """Dispatch the function call to the appropriate tool and log the call."""
         func = self.tools.get(name)
         if not func:
             raise ValueError(f"Unknown tool: {name}")
-        return func(**args)
+
+        result = func(**args)
+
+        log_entry = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "tool": name,
+            "arguments": args,
+            "result": result if len(str(result)) <= 200 else str(result)[:200] + "...",
+        }
+        try:
+            log_path = "vault/audit_log.jsonl"
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as logf:
+                logf.write(json.dumps(log_entry) + "\n")
+        except Exception as e:
+            print(f"Logging error: {e}")
+
+        return result
 
     def ask(self, prompt: str, domain: str, model_override: str | None = None) -> tuple[str, str]:
         # Use GPT-4 by default for function-calling capable queries
