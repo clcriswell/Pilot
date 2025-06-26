@@ -25,7 +25,7 @@ def _init_pinecone():
     global _pinecone_index
     if pinecone is None:
         raise ModuleNotFoundError(
-            "The 'pinecone-client' package is required for semantic_search."
+            "The 'pinecone' package is required for semantic_search."
         )
 
     api_key = st.secrets.get("pinecone_api_key") or os.environ.get("PINECONE_API_KEY")
