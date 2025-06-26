@@ -1,0 +1,7 @@
+Slide Deck Outline – {{ project_name }}
+{% for slide in slides %}
+Slide {{ loop.index }}: {{ slide.title }}
+{% for point in slide.points %}
+•\t{{ point }}
+{% endfor %}
+{% endfor %}

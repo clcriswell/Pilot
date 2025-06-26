@@ -17,7 +17,12 @@ if run_clicked and user_request:
         results, log = orchestrator.run_research(safe_request)
         st.subheader("Activity Log")
         st.code("\n".join(log))
-        report_text = synthesizer.synthesize_report(safe_request, results)
-        pdf_bytes = composer.make_pdf(report_text)
+        report_md = synthesizer.synthesize(
+            project_name=safe_request,
+            user_prompt=safe_request,
+            data=results,
+            artifacts={}
+        )
+        pdf_bytes = composer.make_pdf(report_md)
         st.success("Research complete! Download the full report below:")
         st.download_button(label="📄 Download Report PDF", data=pdf_bytes, file_name="research_report.pdf", mime="application/pdf")
