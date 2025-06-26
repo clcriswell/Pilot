@@ -31,6 +31,23 @@ export OPENAI_API_KEY="sk-..."           # single key
 export OPENAI_API_KEYS="sk-1,sk-2"        # comma separated list
 ```
 
+If you wish to enable semantic search using Pinecone, add the credentials to
+`.streamlit/secrets.toml` as:
+
+```toml
+pinecone_api_key = "pc-..."
+pinecone_env = "us-east1-gcp"
+pinecone_index = "my-index"
+```
+
+Alternatively set them as environment variables when running locally:
+
+```bash
+export PINECONE_API_KEY="pc-..."
+export PINECONE_ENV="us-east1-gcp"
+export PINECONE_INDEX="my-index"
+```
+
 Open your browser at `http://localhost:8501`, enter a project description
 (e.g. "Design a drone for wildfire detection") and click **Run Secure Research**.
 A PDF report will be generated for download once the loop completes.
