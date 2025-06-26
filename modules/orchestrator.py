@@ -23,7 +23,10 @@ def run_research(request: str, knowledge_base=None):
                 tasks.append(qr.ask_async(prompt, domain))
                 task_domains.append(domain)
         if tasks:
-            responses = asyncio.run(asyncio.gather(*tasks))
+            async def run_tasks():
+                return await asyncio.gather(*tasks)
+
+            responses = asyncio.run(run_tasks())
             for dom, (answer, model_used) in zip(task_domains, responses):
                 clean = scanner.scan_content(answer)
                 if clean != answer:
