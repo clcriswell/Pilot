@@ -171,9 +171,9 @@ class QueryRouter:
         msg = response.choices[0].message
 
         conversation = messages[:]
-        while msg.get("function_call"):
-            func_name = msg["function_call"]["name"]
-            args_json = msg["function_call"].get("arguments", "{}")
+        while getattr(msg, "function_call", None):
+            func_name = msg.function_call.name
+            args_json = getattr(msg.function_call, "arguments", "{}")
             try:
                 args = json.loads(args_json)
             except json.JSONDecodeError:
@@ -181,7 +181,7 @@ class QueryRouter:
 
             result = self.call_tool(func_name, args)
 
-            conversation.append({"role": "assistant", "content": None, "function_call": msg["function_call"]})
+            conversation.append({"role": "assistant", "content": None, "function_call": msg.function_call.model_dump() if hasattr(msg.function_call, "model_dump") else {"name": msg.function_call.name, "arguments": args_json}})
             conversation.append({"role": "function", "name": func_name, "content": str(result)})
 
             response = client.chat.completions.create(
@@ -192,7 +192,7 @@ class QueryRouter:
             )
             msg = response.choices[0].message
 
-        answer = msg.get("content", "").strip()
+        answer = (msg.content or "").strip()
         conversation.append({"role": "assistant", "content": answer})
         # Persist conversation history (excluding the fixed system prompt)
         self.conversation = conversation[1:]
@@ -224,16 +224,16 @@ class QueryRouter:
 
         msg = response["choices"][0]["message"]
         conversation = messages[:]
-        while msg.get("function_call"):
-            func_name = msg["function_call"]["name"]
-            args_json = msg["function_call"].get("arguments", "{}")
+        while getattr(msg, "function_call", None):
+            func_name = msg.function_call.name
+            args_json = getattr(msg.function_call, "arguments", "{}")
             try:
                 args = json.loads(args_json)
             except json.JSONDecodeError:
                 args = {}
 
             result = self.call_tool(func_name, args)
-            conversation.append({"role": "assistant", "content": None, "function_call": msg["function_call"]})
+            conversation.append({"role": "assistant", "content": None, "function_call": msg.function_call.model_dump() if hasattr(msg.function_call, "model_dump") else {"name": msg.function_call.name, "arguments": args_json}})
             conversation.append({"role": "function", "name": func_name, "content": str(result)})
 
             try:
@@ -249,5 +249,5 @@ class QueryRouter:
 
             msg = response["choices"][0]["message"]
 
-        answer = msg.get("content", "").strip()
+        answer = (getattr(msg, "content", "") or "").strip()
         return answer, model_name
