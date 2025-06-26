@@ -90,6 +90,17 @@ class QueryRouter:
             },
         ]
 
+        # Base system prompt describing assistant role and tools
+        self.base_system_prompt = (
+            "You are a knowledgeable R&D assistant. You have access to the following tools: "
+            "semantic_search (to lookup information), fetch_image (to find relevant images), "
+            "summarize_text (to condense information). Use these tools when appropriate, and provide clear, concise answers."
+        )
+        self.base_messages = [{"role": "system", "content": self.base_system_prompt}]
+
+        # Running conversation history (excluding the fixed system prompt)
+        self.conversation: list[dict] = []
+
     @lru_cache(maxsize=128)
     def _cached_completion(self, prompt: str, model_name: str) -> str:
         client = openai.OpenAI(api_key=self.api_keys[self.key_index])
@@ -113,18 +124,25 @@ class QueryRouter:
 
         client = openai.OpenAI(api_key=self.api_keys[self.key_index])
 
-        # Build the message list with a system prompt describing the assistant and tools
-        messages = [
-            {
+        # Build the message list with a fixed system prefix and running conversation
+        messages = self.base_messages + self.conversation + [{"role": "user", "content": prompt}]
+
+        # Summarize older conversation if it becomes too long
+        total_chars = sum(len(m.get("content", "")) for m in messages)
+        if total_chars > 10000:
+            convo_text = ""
+            for m in self.conversation:
+                role = m.get("role")
+                content = m.get("content", "")
+                if role in ("user", "assistant") and content:
+                    convo_text += f"{role}: {content}\n"
+            summary = tools.summarize_text(convo_text, sentences=5)
+            summary_message = {
                 "role": "system",
-                "content": (
-                    "You are a secure R&D assistant. You have access to tools like "
-                    "semantic_search (for knowledge base queries), fetch_image (for finding images), "
-                    "and summarize_text (for summarizing content). Use tools when needed, and return answers in natural language."
-                ),
-            },
-            {"role": "user", "content": prompt},
-        ]
+                "content": f"(Summary of earlier conversation: {summary})",
+            }
+            self.conversation = [summary_message]
+            messages = self.base_messages + self.conversation + [{"role": "user", "content": prompt}]
 
         response = client.chat.completions.create(
             model=model_name,
@@ -157,5 +175,9 @@ class QueryRouter:
             msg = response.choices[0].message
 
         answer = msg.get("content", "").strip()
+        conversation.append({"role": "assistant", "content": answer})
+        # Persist conversation history (excluding the fixed system prompt)
+        self.conversation = conversation[1:]
+
         self.key_index = (self.key_index + 1) % len(self.api_keys)
         return answer, model_name
