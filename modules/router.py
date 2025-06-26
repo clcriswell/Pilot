@@ -146,7 +146,10 @@ class QueryRouter:
         messages = self.base_messages + self.conversation + [{"role": "user", "content": prompt}]
 
         # Summarize older conversation if it becomes too long
-        total_chars = sum(len(m.get("content", "")) for m in messages)
+        # Handle messages that may have `None` as the content (e.g. assistant
+        # function calls) by treating them as empty strings when counting
+        # characters.
+        total_chars = sum(len(m.get("content") or "") for m in messages)
         if total_chars > 10000:
             convo_text = ""
             for m in self.conversation:
