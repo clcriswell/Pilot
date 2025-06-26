@@ -60,6 +60,31 @@ def run_research(request: str):
     results["Next Steps"] = next_steps
     log.append("Generated recommended next steps.")
 
+    # --- compile technical spec fields ---
+    req_prompt = (
+        f"Using the project request '{request}' and all domain findings, "
+        "list the key system requirements in bullet form."
+    )
+    requirements, model_used = qr.ask(req_prompt, "requirements", model_override="gpt-3.5-turbo")
+    results["requirements"] = requirements
+    log.append("Compiled requirements summary.")
+
+    comp_prompt = (
+        "Provide a short component breakdown summarizing major subsystems "
+        "and their roles based on the research findings."
+    )
+    components, model_used = qr.ask(comp_prompt, "analysis", model_override="gpt-3.5-turbo")
+    results["component_analysis"] = components
+    log.append("Generated component analysis.")
+
+    feas_prompt = (
+        "Assess overall feasibility in 2-3 sentences, including any major "
+        "risks or challenges mentioned in the research findings."
+    )
+    feasibility, model_used = qr.ask(feas_prompt, "feasibility", model_override="gpt-3.5-turbo")
+    results["feasibility"] = feasibility
+    log.append("Evaluated feasibility.")
+
     # delete any placeholder that crept in
     results.pop("Next Steps Considerations", None)
 
