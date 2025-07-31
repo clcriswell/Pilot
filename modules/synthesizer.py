@@ -23,7 +23,7 @@ def choose_template_type(prompt: str) -> str:
     p = prompt.lower()
     if "strategic plan" in p or "business plan" in p:
         return "strategic_plan"
-    if "design spec" in p or "architecture" in p:
+    if "design spec" in p or "architecture" in p or any(k in p for k in ("design", "build", "develop")):
         return "technical_spec"
     if "prototype" in p or "code" in p:
         return "code_prototype"
