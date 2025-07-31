@@ -12,18 +12,19 @@ except ModuleNotFoundError:
     openai = None
 
 try:
-    import pinecone
+    from pinecone import Pinecone
 except ModuleNotFoundError:
-    pinecone = None
+    Pinecone = None
 
 # Global Pinecone index handle
 _pinecone_index = None
+_pinecone_client = None
 
 
 def _init_pinecone():
     """Initialize Pinecone client using credentials from secrets or env vars."""
-    global _pinecone_index
-    if pinecone is None:
+    global _pinecone_index, _pinecone_client
+    if Pinecone is None:
         raise ModuleNotFoundError(
             "The 'pinecone' package is required for semantic_search."
         )
@@ -36,8 +37,8 @@ def _init_pinecone():
             "Pinecone API key, environment, or index name not configured."
         )
 
-    pinecone.init(api_key=api_key, environment=env)
-    _pinecone_index = pinecone.Index(index_name)
+    _pinecone_client = Pinecone(api_key=api_key, environment=env)
+    _pinecone_index = _pinecone_client.Index(index_name)
 
 
 def semantic_search(query: str) -> str:
